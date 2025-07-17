@@ -13,20 +13,22 @@ export const checkRunningWorkflows = async () => {
   const allRuns: WorkflowRun[] = JSON.parse(localStorage.getItem('workflow_runs') || '[]');
   const runningRuns = allRuns.filter(run => run.status === 'running');
 
+  console.log(`Polling check: Found ${runningRuns.length} running workflow(s)`);
+
   if (runningRuns.length === 0) {
-    console.log('No active workflows. Stopping polling service.');
-    stopPollingService();
+    console.log('No active workflows, but keeping polling service running');
     return;
   }
-
-  console.log(`Polling for ${runningRuns.length} running workflow(s)...`);
 
   for (const run of runningRuns) {
     const now = new Date();
     const createdTime = new Date(run.created_at);
     const timeDiffMinutes = (now.getTime() - createdTime.getTime()) / (1000 * 60);
 
+    console.log(`Checking run ${run.run_id}: platforms=${run.platforms.join(',')}, age=${Math.floor(timeDiffMinutes)}min`);
+
     try {
+      // Query Supabase for results with this session ID
       const { data: results, error } = await supabase
         .from('viral-content-identifier')
         .select('platform')
@@ -34,27 +36,39 @@ export const checkRunningWorkflows = async () => {
 
       if (error) {
         console.error(`Error fetching results for run ${run.run_id}:`, error);
-        continue; // Check next run
+        continue;
       }
 
-      const receivedPlatforms = Array.from(new Set(results.map(r => (r as any).platform.toLowerCase())));
-      const allPlatformsReturned = run.platforms.every(p => receivedPlatforms.includes(p.toLowerCase()));
-      const isTimedOut = timeDiffMinutes > TIMEOUT_MINUTES;
+      console.log(`Run ${run.run_id}: Found ${results.length} results in Supabase`);
 
-      if (allPlatformsReturned) {
-        console.log(`Run ${run.run_id} is complete. Updating status.`);
-        updateRunStatus(run.run_id, 'complete', timeDiffMinutes);
-      } else if (isTimedOut) {
-        if (results.length > 0) {
-          console.log(`Run ${run.run_id} timed out with partial results. Marking complete.`);
+      if (results.length > 0) {
+        const receivedPlatforms = results.map(r => r.platform.toLowerCase());
+        const requestedPlatforms = run.platforms.map(p => p.toLowerCase());
+        
+        console.log(`Run ${run.run_id}: Requested=[${requestedPlatforms.join(',')}], Received=[${receivedPlatforms.join(',')}]`);
+        
+        // Check if we have at least one result for each requested platform
+        const allPlatformsReturned = requestedPlatforms.every(platform => 
+          receivedPlatforms.includes(platform)
+        );
+
+        if (allPlatformsReturned) {
+          console.log(`✅ Run ${run.run_id} is complete - all platforms returned results`);
+          updateRunStatus(run.run_id, 'complete', timeDiffMinutes);
+        } else if (timeDiffMinutes > TIMEOUT_MINUTES) {
+          console.log(`⏰ Run ${run.run_id} timed out with partial results - marking complete`);
           updateRunStatus(run.run_id, 'complete', TIMEOUT_MINUTES);
         } else {
-          console.log(`Run ${run.run_id} timed out with no results. Marking failed.`);
-          updateRunStatus(run.run_id, 'failed', TIMEOUT_MINUTES);
+          console.log(`⏳ Run ${run.run_id} still waiting for platforms: ${requestedPlatforms.filter(p => !receivedPlatforms.includes(p)).join(',')}`);
         }
+      } else if (timeDiffMinutes > TIMEOUT_MINUTES) {
+        console.log(`❌ Run ${run.run_id} timed out with no results - marking failed`);
+        updateRunStatus(run.run_id, 'failed', TIMEOUT_MINUTES);
+      } else {
+        console.log(`⏳ Run ${run.run_id} still waiting for first results (${Math.floor(timeDiffMinutes)}min elapsed)`);
       }
     } catch (e) {
-      console.error(`An unexpected error occurred while polling for run ${run.run_id}:`, e);
+      console.error(`Unexpected error polling run ${run.run_id}:`, e);
     }
   }
 };
@@ -67,13 +81,17 @@ const updateRunStatus = (runId: string, status: 'complete' | 'failed', durationM
   const runIndex = allRuns.findIndex(r => r.run_id === runId);
 
   if (runIndex !== -1) {
+    console.log(`📝 Updating run ${runId} status to ${status}`);
     allRuns[runIndex].status = status;
     allRuns[runIndex].duration = Math.floor(durationMinutes * 60);
     allRuns[runIndex].updated_at = new Date().toISOString();
     localStorage.setItem('workflow_runs', JSON.stringify(allRuns));
+    
     // Notify listeners in same and other tabs
     window.dispatchEvent(new Event('storage'));
     window.dispatchEvent(new Event('workflow_runs_updated'));
+  } else {
+    console.warn(`⚠️ Could not find run ${runId} to update status`);
   }
 };
 
@@ -82,17 +100,20 @@ const updateRunStatus = (runId: string, status: 'complete' | 'failed', durationM
  */
 export const startPollingService = () => {
   if (pollingIntervalId) {
-    console.log('Polling service is already running.');
+    console.log('Polling service is already running');
     return;
   }
-  console.log('Starting workflow polling service...');
+  
+  console.log('🚀 Starting workflow polling service...');
+  
   // Run once immediately, then set up the interval
   checkRunningWorkflows();
   pollingIntervalId = window.setInterval(checkRunningWorkflows, POLLING_INTERVAL);
 
-  // If tab was hidden, timers may be throttled. When user returns, run an immediate check.
+  // Handle visibility changes - run check when tab becomes visible
   const visibilityHandler = () => {
     if (!document.hidden) {
+      console.log('Tab became visible, running immediate polling check');
       checkRunningWorkflows();
     }
   };
@@ -104,7 +125,7 @@ export const startPollingService = () => {
  */
 export const stopPollingService = () => {
   if (pollingIntervalId) {
-    console.log('Stopping workflow polling service...');
+    console.log('🛑 Stopping workflow polling service');
     clearInterval(pollingIntervalId);
     pollingIntervalId = null;
   }

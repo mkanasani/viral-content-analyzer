@@ -7,11 +7,20 @@ import History from './pages/History';
 import Results from './pages/Results';
 import { startPollingService } from './lib/pollingService';
 import { startRealtimeService } from './lib/realtimeService';
+import { forceFixStuckStatuses } from './lib/migration';
 
 const App: React.FC = () => {
   useEffect(() => {
+    console.log('🚀 App starting up...');
+    
+    // Fix any stuck statuses on app startup
+    forceFixStuckStatuses();
+    
+    // Start both polling and realtime services
     startPollingService();
     startRealtimeService();
+    
+    console.log('✅ App initialization complete');
   }, []);
 
   return (

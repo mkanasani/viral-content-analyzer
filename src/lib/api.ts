@@ -146,6 +146,7 @@ export const getWorkflowResults = async (runId: string): Promise<WorkflowResult[
       frequently_asked_questions: Array.isArray(item.frequently_asked_questions) ? item.frequently_asked_questions : [],
       behavioral_insights: typeof item.behavioral_insights === 'string' ? item.behavioral_insights : '',
       feedback_themes: typeof item.feedback_themes === 'string' ? item.feedback_themes : '',
+      urls: Array.isArray(item.urls) ? item.urls : [],
     }));
 
     return sanitizedData || [];

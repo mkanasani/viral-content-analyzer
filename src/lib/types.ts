@@ -31,5 +31,6 @@ export interface ViralContentResult {
   frequently_asked_questions: string[];
   behavioral_insights: string[];
   feedback_themes: string[];
+  urls?: string[];
   created_at: string;
 }

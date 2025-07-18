@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, Users, TrendingUp, MessageSquare, Brain, ThumbsUp, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Clock, Users, TrendingUp, MessageSquare, Brain, ThumbsUp, Loader2, AlertCircle, Link as LinkIcon } from 'lucide-react';
 import { getWorkflowRunById, getWorkflowResults, WorkflowRun, WorkflowResult } from '../lib/api';
 import StatusIndicator from '../components/StatusIndicator';
 import PlatformBadge from '../components/PlatformBadge';
@@ -221,7 +221,7 @@ const Results: React.FC = () => {
               </div>
 
               {/* Insights */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
                 {/* FAQs */}
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
@@ -271,6 +271,33 @@ const Results: React.FC = () => {
                       </div>
                     ) : (
                       <p className="text-gray-500 text-sm">No themes available</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Relevant URLs */}
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+                    <LinkIcon className="h-5 w-5 mr-2 text-orange-400" />
+                    Relevant URLs
+                  </h3>
+                  <div className="space-y-2">
+                    {result.urls && result.urls.length > 0 ? (
+                      result.urls.map((url, i) => (
+                        <div key={i} className="bg-gray-700/50 rounded-lg p-3">
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-orange-400 hover:text-orange-300 text-sm break-all transition-colors flex items-start space-x-2"
+                          >
+                            <LinkIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <span>{url}</span>
+                          </a>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-sm">No URLs available</p>
                     )}
                   </div>
                 </div>

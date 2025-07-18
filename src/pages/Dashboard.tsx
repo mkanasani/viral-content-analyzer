@@ -4,6 +4,7 @@ import { Plus, Search, Clock, TrendingUp } from 'lucide-react';
 import SearchForm from '../components/SearchForm';
 import StatusIndicator from '../components/StatusIndicator';
 import PlatformBadge from '../components/PlatformBadge';
+import RecentRunSkeleton from '../components/RecentRunSkeleton';
 import { getWorkflowRuns, WorkflowRun } from '../lib/api';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -113,18 +114,8 @@ const Dashboard: React.FC = () => {
 
         {isLoading ? (
           <div className="grid gap-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 animate-pulse">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="h-4 bg-gray-700 rounded w-1/3"></div>
-                  <div className="h-6 bg-gray-700 rounded w-20"></div>
-                </div>
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className="h-6 bg-gray-700 rounded w-16"></div>
-                  <div className="h-6 bg-gray-700 rounded w-20"></div>
-                </div>
-                <div className="h-4 bg-gray-700 rounded w-24"></div>
-              </div>
+            {[...Array(5)].map((_, i) => (
+              <RecentRunSkeleton key={i} />
             ))}
           </div>
         ) : recentRuns.length === 0 ? (

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Search, Filter, Calendar, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import StatusIndicator from '../components/StatusIndicator';
 import PlatformBadge from '../components/PlatformBadge';
+import HistoryRowSkeleton from '../components/HistoryRowSkeleton';
 import { getWorkflowRuns, searchWorkflowRuns, WorkflowRun } from '../lib/api';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -146,9 +147,36 @@ const History: React.FC = () => {
       {/* Table */}
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-700/50 overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading workflow history...</p>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-700/50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Query
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Platforms
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Duration
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Created
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-700/50">
+                {[...Array(8)].map((_, i) => (
+                  <HistoryRowSkeleton key={i} />
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : runs.length === 0 ? (
           <div className="p-8 text-center">

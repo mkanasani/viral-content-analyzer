@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, Users, TrendingUp, MessageSquare, Brain, ThumbsUp, Loader2, AlertCircle, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Clock, Users, TrendingUp, MessageSquare, Brain, ThumbsUp, Loader2, AlertCircle, Link as LinkIcon, BarChart3 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getWorkflowRunById, getWorkflowResults, WorkflowRun, WorkflowResult } from '../lib/api';
 import StatusIndicator from '../components/StatusIndicator';
 import PlatformBadge from '../components/PlatformBadge';
@@ -76,6 +77,15 @@ const Results: React.FC = () => {
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
+  };
+
+  const prepareChartData = () => {
+    return results.map(result => ({
+      platform: result.platform.charAt(0).toUpperCase() + result.platform.slice(1),
+      'Audience Sentiment': result.audience_sentiment_score,
+      'Tool Value': result.perceived_tool_value,
+      'Engagement Quality': result.engagement_quality_score,
+    }));
   };
 
   const formatDuration = (seconds?: number) => {
@@ -185,6 +195,67 @@ const Results: React.FC = () => {
 
       {run.status === 'complete' && results.length > 0 && (
         <div className="space-y-6">
+          {/* Platform Performance Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50"
+          >
+            <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+              <BarChart3 className="h-6 w-6 mr-2 text-red-500" />
+              Platform Performance Overview
+            </h2>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={prepareChartData()}
+                  margin={{
+                    top: 20,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis 
+                    dataKey="platform" 
+                    stroke="#9CA3AF"
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    stroke="#9CA3AF"
+                    fontSize={12}
+                    domain={[0, 10]}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1F2937',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#F9FAFB'
+                    }}
+                  />
+                  <Legend />
+                  <Bar 
+                    dataKey="Audience Sentiment" 
+                    fill="#10B981" 
+                    radius={[2, 2, 0, 0]}
+                  />
+                  <Bar 
+                    dataKey="Tool Value" 
+                    fill="#F59E0B" 
+                    radius={[2, 2, 0, 0]}
+                  />
+                  <Bar 
+                    dataKey="Engagement Quality" 
+                    fill="#3B82F6" 
+                    radius={[2, 2, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+
           {results.map((result, index) => (
             <motion.div
               key={result.id}

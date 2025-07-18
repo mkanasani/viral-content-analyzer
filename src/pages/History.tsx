@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Filter, Calendar, ChevronLeft, ChevronRight, Eye, RotateCcw } from 'lucide-react';
+import { Search, Filter, Calendar, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import StatusIndicator from '../components/StatusIndicator';
 import PlatformBadge from '../components/PlatformBadge';
 import { getWorkflowRuns, searchWorkflowRuns, WorkflowRun } from '../lib/api';
@@ -226,13 +226,6 @@ const History: React.FC = () => {
                               <span>View</span>
                             </Link>
                           )}
-                          <button
-                            onClick={() => toast.info('Re-run functionality coming soon!')}
-                            className="text-blue-400 hover:text-blue-300 transition-colors flex items-center space-x-1"
-                          >
-                            <RotateCcw className="h-4 w-4" />
-                            <span>Re-run</span>
-                          </button>
                         </div>
                       </td>
                     </motion.tr>

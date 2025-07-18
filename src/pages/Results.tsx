@@ -93,19 +93,26 @@ const Results: React.FC = () => {
       const filename = `viral-content-report-${run.search_query.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${run.run_id.slice(0, 8)}.pdf`;
       
       const options = {
-        margin: 0.5,
+        margin: [0.75, 0.5, 0.75, 0.5], // top, right, bottom, left
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-          scale: 2,
+          scale: 3,
           useCORS: true,
           allowTaint: true,
-          backgroundColor: '#111827' // Match your app's background
+          backgroundColor: '#111827', // Match your app's background
+          logging: false,
+          letterRendering: true,
+          width: element.scrollWidth,
+          height: element.scrollHeight,
+          scrollX: 0,
+          scrollY: 0
         },
         jsPDF: { 
           unit: 'in', 
           format: 'a4', 
-          orientation: 'portrait' 
+          orientation: 'portrait',
+          compress: true
         }
       };
       
@@ -199,9 +206,9 @@ const Results: React.FC = () => {
       </div>
 
       {/* PDF Content Container */}
-      <div ref={pdfContentRef} className="space-y-6">
+      <div ref={pdfContentRef} className="pdf-export-content space-y-6">
         {/* PDF Header - Only visible in PDF */}
-        <div className="hidden print:block bg-white p-6 rounded-lg">
+        <div className="hidden print:block bg-white p-6 rounded-lg mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Viral Content Analysis Report</h1>
           <p className="text-gray-600 mb-4">Search Query: {run.search_query}</p>
           <div className="grid grid-cols-2 gap-4 text-sm">

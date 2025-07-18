@@ -79,6 +79,43 @@ const Results: React.FC = () => {
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
+  const handleDownloadPdf = async () => {
+    if (!pdfContentRef.current || !run) return;
+    
+    setIsGeneratingPdf(true);
+    toast.loading('Generating PDF report...', { id: 'pdf-generation' });
+    
+    try {
+      const element = pdfContentRef.current;
+      const filename = `viral-content-report-${run.search_query.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${run.run_id.slice(0, 8)}.pdf`;
+      
+      const options = {
+        margin: 0.5,
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#111827' // Match your app's background
+        },
+        jsPDF: { 
+          unit: 'in', 
+          format: 'a4', 
+          orientation: 'portrait' 
+        }
+      };
+      
+      await html2pdf().set(options).from(element).save();
+      toast.success('PDF report downloaded successfully!', { id: 'pdf-generation' });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF report', { id: 'pdf-generation' });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
   const prepareChartData = () => {
     return results.map(result => ({
       platform: result.platform.charAt(0).toUpperCase() + result.platform.slice(1),
@@ -139,34 +176,72 @@ const Results: React.FC = () => {
           <h1 className="text-3xl font-bold text-white">{run.search_query}</h1>
           <p className="text-gray-400">Workflow Results</p>
         </div>
-        <StatusIndicator status={run.status} />
+        <div className="flex items-center space-x-3">
+          {run.status === 'complete' && results.length > 0 && (
+            <button
+              onClick={handleDownloadPdf}
+              disabled={isGeneratingPdf}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+            >
+              {isGeneratingPdf ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              <span>{isGeneratingPdf ? 'Generating...' : 'Download PDF'}</span>
+            </button>
+          )}
+          <StatusIndicator status={run.status} />
+        </div>
       </div>
 
-      {/* Workflow Info */}
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <p className="text-gray-400 text-sm">Run ID</p>
-            <p className="text-white font-mono text-sm">{run.run_id}</p>
-          </div>
-          <div>
-            <p className="text-gray-400 text-sm">Created</p>
-            <p className="text-white">{formatTimeAgo(run.created_at)}</p>
-          </div>
-          <div>
-            <p className="text-gray-400 text-sm">Duration</p>
-            <p className="text-white">{formatDuration(run.duration)}</p>
-          </div>
-          <div>
-            <p className="text-gray-400 text-sm">Platforms</p>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {run.platforms.map((platform) => (
-                <PlatformBadge key={platform} platform={platform} size="sm" />
-              ))}
+      {/* PDF Content Container */}
+      <div ref={pdfContentRef} className="space-y-6">
+        {/* PDF Header - Only visible in PDF */}
+        <div className="hidden print:block bg-white p-6 rounded-lg">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Viral Content Analysis Report</h1>
+          <p className="text-gray-600 mb-4">Search Query: {run.search_query}</p>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="font-medium text-gray-700">Run ID:</span> {run.run_id}
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">Generated:</span> {new Date().toLocaleDateString()}
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">Duration:</span> {formatDuration(run.duration)}
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">Platforms:</span> {run.platforms.join(', ')}
             </div>
           </div>
         </div>
-      </div>
+
+        {/* Workflow Info */}
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-gray-400 text-sm">Run ID</p>
+              <p className="text-white font-mono text-sm">{run.run_id}</p>
+            </div>
+            <div>
+              <p className="text-gray-400 text-sm">Created</p>
+              <p className="text-white">{formatTimeAgo(run.created_at)}</p>
+            </div>
+            <div>
+              <p className="text-gray-400 text-sm">Duration</p>
+              <p className="text-white">{formatDuration(run.duration)}</p>
+            </div>
+            <div>
+              <p className="text-gray-400 text-sm">Platforms</p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {run.platforms.map((platform) => (
+                  <PlatformBadge key={platform} platform={platform} size="sm" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
 
       {/* Results */}
       {run.status === 'running' && (
@@ -377,6 +452,7 @@ const Results: React.FC = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };

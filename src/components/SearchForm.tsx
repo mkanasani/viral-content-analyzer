@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, Loader2, AlertCircle } from 'lucide-react';
+import { X, Search, Loader2, AlertCircle, Facebook, Instagram, Linkedin, Youtube, Twitter } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { triggerWorkflow, WorkflowPayload } from '../lib/api';
 
@@ -13,12 +13,12 @@ interface SearchFormProps {
 }
 
 const platforms = [
-  { id: 'tiktok', name: 'TikTok', color: 'from-pink-500 to-red-500' },
-  { id: 'instagram', name: 'Instagram', color: 'from-purple-500 to-pink-500' },
-  { id: 'youtube', name: 'YouTube', color: 'from-red-500 to-red-600' },
-  { id: 'twitter', name: 'Twitter', color: 'from-blue-400 to-blue-500' },
-  { id: 'linkedin', name: 'LinkedIn', color: 'from-blue-600 to-blue-700' },
-  { id: 'facebook', name: 'Facebook', color: 'from-blue-500 to-blue-600' },
+  { id: 'tiktok', name: 'TikTok', icon: Youtube, color: 'from-pink-500 to-red-500' },
+  { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'from-purple-500 to-pink-500' },
+  { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'from-red-500 to-red-600' },
+  { id: 'twitter', name: 'Twitter', icon: Twitter, color: 'from-blue-400 to-blue-500' },
+  { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'from-blue-600 to-blue-700' },
+  { id: 'facebook', name: 'Facebook', icon: Facebook, color: 'from-blue-500 to-blue-600' },
 ];
 
 const SearchForm: React.FC<SearchFormProps> = ({ isOpen, onClose, onSuccess }) => {
@@ -165,13 +165,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ isOpen, onClose, onSuccess }) =
                       key={platform.id}
                       type="button"
                       onClick={() => togglePlatform(platform.id)}
+                      title={platform.name}
                       className={`p-3 rounded-lg border transition-all duration-200 ${
                         selectedPlatforms[platform.id]
                           ? `bg-gradient-to-r ${platform.color} border-transparent text-white`
                           : 'bg-gray-700 border-gray-600 text-gray-300 hover:border-gray-500'
-                      }`}
+                      } flex items-center justify-center`}
                     >
-                      {platform.name}
+                      <platform.icon className="h-6 w-6" />
                     </button>
                   ))}
                 </div>

@@ -20,7 +20,7 @@ export interface WorkflowPayload {
 export const triggerWorkflow = async (payload: WorkflowPayload): Promise<string> => {
   const runId = payload.session_id;
   const platforms = Object.entries(payload)
-    .filter(([key, value]) => key.startsWith('search_') && value)
+    .filter(([key, value]) => key.startsWith('search_') && key !== 'search_query' && value)
     .map(([key]) => key.replace('search_', ''));
 
   const workflowRun: WorkflowRun = {

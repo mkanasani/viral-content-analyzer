@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, Users, TrendingUp, MessageSquare, Brain, ThumbsUp, Loader2, AlertCircle, Link as LinkIcon, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Clock, Users, TrendingUp, MessageSquare, Brain, ThumbsUp, Loader2, AlertCircle, Link as LinkIcon, BarChart3, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getWorkflowRunById, getWorkflowResults, WorkflowRun, WorkflowResult } from '../lib/api';
 import StatusIndicator from '../components/StatusIndicator';
 import PlatformBadge from '../components/PlatformBadge';
 import MetricCard from '../components/MetricCard';
 import toast from 'react-hot-toast';
+import html2pdf from 'html2pdf.js';
 
 const Results: React.FC = () => {
   const { runId } = useParams<{ runId: string }>();
@@ -15,6 +16,8 @@ const Results: React.FC = () => {
   const [results, setResults] = useState<WorkflowResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const pdfContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     console.log('Results component mounted, runId:', runId);
@@ -243,215 +246,215 @@ const Results: React.FC = () => {
           </div>
         </div>
 
-      {/* Results */}
-      {run.status === 'running' && (
-        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-6 text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-400 mx-auto mb-4" />
-          <p className="text-blue-400 font-medium">Workflow is still running...</p>
-          <p className="text-gray-400 text-sm mt-2">Results will appear here when the analysis is complete</p>
-        </div>
-      )}
+        {/* Results */}
+        {run.status === 'running' && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-6 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-400 mx-auto mb-4" />
+            <p className="text-blue-400 font-medium">Workflow is still running...</p>
+            <p className="text-gray-400 text-sm mt-2">Results will appear here when the analysis is complete</p>
+          </div>
+        )}
 
-      {run.status === 'failed' && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center">
-          <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-4" />
-          <p className="text-red-400 font-medium">Workflow failed</p>
-          <p className="text-gray-400 text-sm mt-2">Please try running the analysis again</p>
-        </div>
-      )}
+        {run.status === 'failed' && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center">
+            <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-4" />
+            <p className="text-red-400 font-medium">Workflow failed</p>
+            <p className="text-gray-400 text-sm mt-2">Please try running the analysis again</p>
+          </div>
+        )}
 
-      {run.status === 'complete' && results.length === 0 && (
-        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-6 text-center">
-          <AlertCircle className="h-8 w-8 text-yellow-400 mx-auto mb-4" />
-          <p className="text-yellow-400 font-medium">No results found</p>
-          <p className="text-gray-400 text-sm mt-2">The workflow completed but no data was returned</p>
-        </div>
-      )}
+        {run.status === 'complete' && results.length === 0 && (
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-6 text-center">
+            <AlertCircle className="h-8 w-8 text-yellow-400 mx-auto mb-4" />
+            <p className="text-yellow-400 font-medium">No results found</p>
+            <p className="text-gray-400 text-sm mt-2">The workflow completed but no data was returned</p>
+          </div>
+        )}
 
-      {run.status === 'complete' && results.length > 0 && (
-        <div className="space-y-6">
-          {/* Platform Performance Chart */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50"
-          >
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-              <BarChart3 className="h-6 w-6 mr-2 text-red-500" />
-              Platform Performance Overview
-            </h2>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={prepareChartData()}
-                  margin={{
-                    top: 20,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="platform" 
-                    stroke="#9CA3AF"
-                    fontSize={12}
-                  />
-                  <YAxis 
-                    stroke="#9CA3AF"
-                    fontSize={12}
-                    domain={[0, 10]}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1F2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#F9FAFB'
-                    }}
-                  />
-                  <Legend />
-                  <Bar 
-                    dataKey="Audience Sentiment" 
-                    fill="#10B981" 
-                    radius={[2, 2, 0, 0]}
-                  />
-                  <Bar 
-                    dataKey="Tool Value" 
-                    fill="#F59E0B" 
-                    radius={[2, 2, 0, 0]}
-                  />
-                  <Bar 
-                    dataKey="Engagement Quality" 
-                    fill="#3B82F6" 
-                    radius={[2, 2, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </motion.div>
-
-          {results.map((result, index) => (
+        {run.status === 'complete' && results.length > 0 && (
+          <div className="space-y-6">
+            {/* Platform Performance Chart */}
             <motion.div
-              key={result.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
               className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50"
             >
-              {/* Platform Header */}
-              <div className="flex items-center justify-between mb-6">
-                <PlatformBadge platform={result.platform} />
-                <span className="text-gray-400 text-sm">
-                  {formatTimeAgo(result.created_at)}
-                </span>
-              </div>
-
-              {/* Metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <MetricCard
-                  title="Audience Sentiment"
-                  value={result.audience_sentiment_score}
-                  type="sentiment"
-                />
-                <MetricCard
-                  title="Tool Value"
-                  value={result.perceived_tool_value}
-                  type="value"
-                />
-                <MetricCard
-                  title="Engagement Quality"
-                  value={result.engagement_quality_score}
-                  type="engagement"
-                />
-              </div>
-
-              {/* Insights */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
-                {/* FAQs */}
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                    <MessageSquare className="h-5 w-5 mr-2 text-blue-400" />
-                    Frequently Asked Questions
-                  </h3>
-                  <div className="space-y-2">
-                    {result.frequently_asked_questions.length > 0 ? (
-                      result.frequently_asked_questions.map((faq, i) => (
-                        <div key={i} className="bg-gray-700/50 rounded-lg p-3">
-                          <p className="text-gray-300 text-sm">{faq}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-sm">No FAQs available</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Behavioral Insights */}
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                    <Brain className="h-5 w-5 mr-2 text-purple-400" />
-                    Behavioral Insights
-                  </h3>
-                  <div className="space-y-2">
-                    {result.behavioral_insights ? (
-                      <div className="bg-gray-700/50 rounded-lg p-3">
-                        <p className="text-gray-300 text-sm whitespace-pre-wrap">{result.behavioral_insights}</p>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-sm">No insights available</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Feedback Themes */}
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                    <ThumbsUp className="h-5 w-5 mr-2 text-green-400" />
-                    Feedback Themes
-                  </h3>
-                  <div className="space-y-2">
-                    {result.feedback_themes ? (
-                      <div className="bg-gray-700/50 rounded-lg p-3">
-                        <p className="text-gray-300 text-sm whitespace-pre-wrap">{result.feedback_themes}</p>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-sm">No themes available</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Relevant URLs */}
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                    <LinkIcon className="h-5 w-5 mr-2 text-orange-400" />
-                    Relevant URLs
-                  </h3>
-                  <div className="space-y-2">
-                    {result.urls && result.urls.length > 0 ? (
-                      result.urls.map((url, i) => (
-                        <div key={i} className="bg-gray-700/50 rounded-lg p-3">
-                          <a
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-orange-400 hover:text-orange-300 text-sm break-all transition-colors flex items-start space-x-2"
-                          >
-                            <LinkIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                            <span>{url}</span>
-                          </a>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-sm">No URLs available</p>
-                    )}
-                  </div>
-                </div>
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+                <BarChart3 className="h-6 w-6 mr-2 text-red-500" />
+                Platform Performance Overview
+              </h2>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={prepareChartData()}
+                    margin={{
+                      top: 20,
+                      right: 30,
+                      left: 20,
+                      bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis 
+                      dataKey="platform" 
+                      stroke="#9CA3AF"
+                      fontSize={12}
+                    />
+                    <YAxis 
+                      stroke="#9CA3AF"
+                      fontSize={12}
+                      domain={[0, 10]}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#1F2937',
+                        border: '1px solid #374151',
+                        borderRadius: '8px',
+                        color: '#F9FAFB'
+                      }}
+                    />
+                    <Legend />
+                    <Bar 
+                      dataKey="Audience Sentiment" 
+                      fill="#10B981" 
+                      radius={[2, 2, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="Tool Value" 
+                      fill="#F59E0B" 
+                      radius={[2, 2, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="Engagement Quality" 
+                      fill="#3B82F6" 
+                      radius={[2, 2, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </motion.div>
-          ))}
-        </div>
-      )}
+
+            {results.map((result, index) => (
+              <motion.div
+                key={result.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50"
+              >
+                {/* Platform Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <PlatformBadge platform={result.platform} />
+                  <span className="text-gray-400 text-sm">
+                    {formatTimeAgo(result.created_at)}
+                  </span>
+                </div>
+
+                {/* Metrics */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <MetricCard
+                    title="Audience Sentiment"
+                    value={result.audience_sentiment_score}
+                    type="sentiment"
+                  />
+                  <MetricCard
+                    title="Tool Value"
+                    value={result.perceived_tool_value}
+                    type="value"
+                  />
+                  <MetricCard
+                    title="Engagement Quality"
+                    value={result.engagement_quality_score}
+                    type="engagement"
+                  />
+                </div>
+
+                {/* Insights */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+                  {/* FAQs */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+                      <MessageSquare className="h-5 w-5 mr-2 text-blue-400" />
+                      Frequently Asked Questions
+                    </h3>
+                    <div className="space-y-2">
+                      {result.frequently_asked_questions.length > 0 ? (
+                        result.frequently_asked_questions.map((faq, i) => (
+                          <div key={i} className="bg-gray-700/50 rounded-lg p-3">
+                            <p className="text-gray-300 text-sm">{faq}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 text-sm">No FAQs available</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Behavioral Insights */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+                      <Brain className="h-5 w-5 mr-2 text-purple-400" />
+                      Behavioral Insights
+                    </h3>
+                    <div className="space-y-2">
+                      {result.behavioral_insights ? (
+                        <div className="bg-gray-700/50 rounded-lg p-3">
+                          <p className="text-gray-300 text-sm whitespace-pre-wrap">{result.behavioral_insights}</p>
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-sm">No insights available</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Feedback Themes */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+                      <ThumbsUp className="h-5 w-5 mr-2 text-green-400" />
+                      Feedback Themes
+                    </h3>
+                    <div className="space-y-2">
+                      {result.feedback_themes ? (
+                        <div className="bg-gray-700/50 rounded-lg p-3">
+                          <p className="text-gray-300 text-sm whitespace-pre-wrap">{result.feedback_themes}</p>
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-sm">No themes available</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Relevant URLs */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+                      <LinkIcon className="h-5 w-5 mr-2 text-orange-400" />
+                      Relevant URLs
+                    </h3>
+                    <div className="space-y-2">
+                      {result.urls && result.urls.length > 0 ? (
+                        result.urls.map((url, i) => (
+                          <div key={i} className="bg-gray-700/50 rounded-lg p-3">
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-orange-400 hover:text-orange-300 text-sm break-all transition-colors flex items-start space-x-2"
+                            >
+                              <LinkIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                              <span>{url}</span>
+                            </a>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 text-sm">No URLs available</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

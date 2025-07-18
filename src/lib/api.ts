@@ -139,6 +139,10 @@ export const getWorkflowResults = async (runId: string): Promise<WorkflowResult[
     // Sanitize data to ensure correct types
     const sanitizedData = data.map(item => ({
       ...item,
+      // Scale scores from 0-5 to 0-10
+      audience_sentiment_score: (item.audience_sentiment_score || 0) * 2,
+      perceived_tool_value: (item.perceived_tool_value || 0) * 2,
+      engagement_quality_score: (item.engagement_quality_score || 0) * 2,
       frequently_asked_questions: Array.isArray(item.frequently_asked_questions) ? item.frequently_asked_questions : [],
       behavioral_insights: typeof item.behavioral_insights === 'string' ? item.behavioral_insights : '',
       feedback_themes: typeof item.feedback_themes === 'string' ? item.feedback_themes : '',

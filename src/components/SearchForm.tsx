@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, Loader2, AlertCircle, Facebook, Instagram, Linkedin, Youtube, Twitter } from 'lucide-react';
+import { X, Search, Loader2, AlertCircle, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { triggerWorkflow, WorkflowPayload } from '../lib/api';
 
@@ -16,7 +16,7 @@ const platforms = [
   { id: 'tiktok', name: 'TikTok', icon: Youtube, color: 'from-pink-500 to-red-500' },
   { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'from-purple-500 to-pink-500' },
   { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'from-red-500 to-red-600' },
-  { id: 'twitter', name: 'Twitter', icon: Twitter, color: 'from-blue-400 to-blue-500' },
+  { id: 'twitter', name: 'X (Twitter)', icon: X, color: 'from-blue-400 to-blue-500' },
   { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'from-blue-600 to-blue-700' },
   { id: 'facebook', name: 'Facebook', icon: Facebook, color: 'from-blue-500 to-blue-600' },
 ];
